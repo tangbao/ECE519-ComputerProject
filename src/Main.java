@@ -1,30 +1,47 @@
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-public class Main {
+import java.security.NoSuchAlgorithmException;
 
-    private final static int[] B = {1};
-    private final static int numOfP = 100; // for each b in B, generate 100 different P
-    private final static int numOfGetM = 100; // for each P, try to get M 100 times
+class SolvePuzzle implements Runnable{
 
-    public static void main(String[] args) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        double[] ave_time_of_size_B = new double[B.length]; //store the ave time of solving puzzles with size B
+    private int[] B = {1, 2, 3, 4};
+    private int numOfP = 1; // for each b in B, generate 100 different P
+    private int numOfGetM = 1; // for each P, try to get M 100 times
+    private MessageDigest digest;
+
+    SolvePuzzle(){
+    }
+
+    SolvePuzzle(int[] B, int numOfP, int numOfGetM){
+        this.B = B;
+        this.numOfP = numOfP;
+        this.numOfGetM = numOfGetM;
+    }
+
+    public void run(){
+        try{
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+            System.exit(1);
+        }
+        double[] ave_trial_of_size_B = new double[B.length]; //store the ave trials of solving puzzles with size B
 
         for (int m=0; m<B.length;m++) {
             int b = B[m];
-            double time_to_solve_size_B = 0.0;
-            double[] ave_time_of_each_P = new double[numOfP]; //store the ave time of solving puzzle P
+            double trial_of_size_B = 0.0;
+            double[] ave_trial_of_each_P = new double[numOfP]; //store the ave trials of solving puzzle P
             for (int i = 0; i < numOfP; i++) {
                 byte[] P = generateP(b);
                 String puzzle = bytesToHex(P);
                 System.out.println("The puzzle is " + puzzle);
-                double time_to_solve_P = 0.0;
+                double trial_to_solve_P = 0.0;
                 for (int j = 0; j < numOfGetM; j++) {
-                    long start_time = System.currentTimeMillis();
-                    long all_time = 0;
+                    int cnt = 0;
                     while (true) {
                         boolean find = true;
-                        String M = new String(generateP(16));
+                        String M = new String(generateP(56));
+                        cnt++;
                         byte[] hash = digest.digest(M.getBytes(StandardCharsets.UTF_8));
                         for (int k = 0; k < b; k++) {
                             if (P[k] != hash[32 - b + k]) {
@@ -33,23 +50,20 @@ public class Main {
                             }
                         }
                         if (find) {
-                            long end_time = System.currentTimeMillis();
-                            all_time += end_time - start_time;
                             System.out.println("The hash of M is " + bytesToHex(hash));
                             break;
                         }
                     }
-                    double all_time_s = all_time / 1000.0;
-                    time_to_solve_P += all_time_s;
+                    trial_to_solve_P += cnt;
                 }
-                time_to_solve_P /= (numOfGetM * 1.0);
-                System.out.println("The average time to solve puzzle " + puzzle + " is: " + time_to_solve_P + " s\n");
-                ave_time_of_each_P[i] = time_to_solve_P;
-                time_to_solve_size_B += time_to_solve_P;
+                trial_to_solve_P /= (numOfGetM * 1.0);
+                System.out.println("The average time to solve puzzle " + puzzle + " is: " + trial_to_solve_P + " s\n");
+                ave_trial_of_each_P[i] = trial_to_solve_P;
+                trial_of_size_B += trial_to_solve_P;
             }
-            time_to_solve_size_B /= (numOfP * 1.0);
-            ave_time_of_size_B[m] = time_to_solve_size_B;
-            System.out.println("The average time to solve puzzle of size " + b + " is: " + time_to_solve_size_B + " s\n");
+            trial_of_size_B /= (numOfP * 1.0);
+            ave_trial_of_size_B[m] = trial_of_size_B;
+            System.out.println("The average time to solve puzzle of size " + b + " is: " + trial_of_size_B + " s\n");
         }
     }
 
@@ -63,7 +77,7 @@ public class Main {
                 }else{
                     b[j] = 0;
                 }
-                r[i] += b[j] * (int)Math.pow(2, j);
+                r[i] += b[j] << j;
             }
         }
         return r;
@@ -78,4 +92,15 @@ public class Main {
         }
         return hexString.toString();
     }
+}
+
+public class Main {
+    private final static int MAX_THREAD = 10;
+    public static void main(String[] args)  {
+        for(int i=0; i<MAX_THREAD; i++){
+            new Thread(new SolvePuzzle()).run();
+        }
+    }
+
+
 }
