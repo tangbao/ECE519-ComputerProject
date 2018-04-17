@@ -4,7 +4,7 @@ import java.security.NoSuchAlgorithmException;
 
 class SolvePuzzle implements Runnable{
 
-    private int[] B = {1, 2, 3, 4};
+    private int[] B = {4};
     private int numOfP = 1; // for each b in B, generate 100 different P
     private int numOfGetM = 1; // for each P, try to get M 100 times
     private MessageDigest digest;
@@ -57,13 +57,13 @@ class SolvePuzzle implements Runnable{
                     trial_to_solve_P += cnt;
                 }
                 trial_to_solve_P /= (numOfGetM * 1.0);
-                System.out.println("The average time to solve puzzle " + puzzle + " is: " + trial_to_solve_P + " s\n");
+                System.out.println("The average time to solve puzzle " + puzzle + " is: " + trial_to_solve_P + "\n");
                 ave_trial_of_each_P[i] = trial_to_solve_P;
                 trial_of_size_B += trial_to_solve_P;
             }
             trial_of_size_B /= (numOfP * 1.0);
             ave_trial_of_size_B[m] = trial_of_size_B;
-            System.out.println("The average time to solve puzzle of size " + b + " is: " + trial_of_size_B + " s\n");
+            System.out.println("The average time to solve puzzle of size " + b + " is: " + trial_of_size_B + "\n");
         }
     }
 
@@ -95,7 +95,7 @@ class SolvePuzzle implements Runnable{
 }
 
 public class Main {
-    private final static int MAX_THREAD = 10;
+    private final static int MAX_THREAD = 8;
     public static void main(String[] args)  {
         for(int i=0; i<MAX_THREAD; i++){
             new Thread(new SolvePuzzle()).run();
